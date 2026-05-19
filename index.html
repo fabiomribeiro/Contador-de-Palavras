@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contador de Palavras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root,
+  [data-theme="light"] {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: #E2DDD4;
+    --text: #1A1814;
+    --text2: #6B665C;
+    --text3: #A09990;
+    --accent: #2D5016;
+    --accent-light: #EBF2E1;
+    --accent-mid: #639922;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    --radius: 12px;
+    --toggle-bg: #E2DDD4;
+    --toggle-icon: "☀️";
+  }
+  [data-theme="dark"] {
+    --bg: #141210;
+    --surface: #1E1C18;
+    --surface2: #272420;
+    --border: #38342C;
+    --text: #F0EDE6;
+    --text2: #A09880;
+    --text3: #6B6558;
+    --accent: #7BBF3A;
+    --accent-light: #1E2A14;
+    --accent-mid: #7BBF3A;
+    --amber: #E8A030;
+    --amber-light: #2A2010;
+    --red: #E05555;
+    --red-light: #2A1414;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+    --radius: 12px;
+    --toggle-bg: #38342C;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { transition: background 0.25s, color 0.25s; }
+  body {
+    font-family: 'Figtree', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    transition: background 0.25s, color 0.25s;
+  }
+  .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .main { padding: 2rem; overflow-y: auto; }
+
+  .sidebar-header {
+    padding: 1.5rem 1.25rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent-mid); border-radius: 50%; }
+  .sidebar-subtitle { font-size: 12px; color: var(--text3); font-weight: 400; }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    background: var(--toggle-bg);
+    border: none;
+    border-radius: 20px;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    margin-top: 4px;
+    transition: background 0.25s;
+  }
+  .theme-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--surface);
+    transition: transform 0.25s, background 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  [data-theme="dark"] .theme-toggle::after { transform: translateX(20px); background: var(--accent-mid); }
+  .theme-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .theme-label { font-size: 10px; color: var(--text3); }
+
+  .sidebar-section { padding: 1rem 1.25rem 0.5rem; }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 0.5rem;
+  }
+  .project-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer;
+    transition: background 0.15s; margin-bottom: 2px;
+  }
+  .project-item:hover { background: var(--surface2); }
+  .project-item.active { background: var(--accent-light); }
+  .project-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .project-name {
+    font-size: 13.5px; font-weight: 500; color: var(--text);
+    flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .project-item.active .project-name { color: var(--accent); }
+  .project-count { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .project-item.active .project-count { color: var(--accent-mid); }
+
+  .all-projects-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer;
+    transition: background 0.15s; margin-bottom: 2px;
+  }
+  .all-projects-item:hover { background: var(--surface2); }
+  .all-projects-item.active { background: var(--accent-light); }
+  .all-projects-item .project-name { color: var(--text2); font-weight: 400; }
+  .all-projects-item.active .project-name { color: var(--accent); font-weight: 500; }
+
+  .btn-new-project {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer;
+    background: none; border: 1px dashed var(--border);
+    color: var(--text3); font-size: 13px;
+    font-family: 'Figtree', sans-serif; width: 100%;
+    transition: all 0.15s; margin-top: 4px;
+  }
+  .btn-new-project:hover { border-color: var(--accent-mid); color: var(--accent); background: var(--accent-light); }
+
+  .sidebar-stats {
+    margin-top: auto; padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .stat-label { font-size: 12px; color: var(--text3); }
+  .stat-value { font-size: 13px; font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
+
+  .main-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.75rem; gap: 1rem;
+  }
+  .page-title { font-family: 'Instrument Serif', serif; font-size: 28px; line-height: 1.2; }
+  .page-meta { font-size: 13px; color: var(--text3); margin-top: 4px; }
+  .page-meta span { color: var(--text2); }
+
+  .btn {
+    padding: 8px 16px; border-radius: 8px;
+    font-family: 'Figtree', sans-serif; font-size: 13.5px;
+    font-weight: 500; cursor: pointer; border: none;
+    transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  [data-theme="light"] .btn-primary:hover { background: #3d6b1f; }
+  [data-theme="dark"] .btn-primary:hover { background: #8ed14a; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red-light); }
+  .btn-danger:hover { background: var(--red-light); }
+
+  .cards-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 1.75rem;
+  }
+  .metric-card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 1rem 1.25rem; box-shadow: var(--shadow);
+    transition: background 0.25s;
+  }
+  .metric-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: 6px; }
+  .metric-value { font-size: 26px; font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); line-height: 1; }
+  .metric-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .metric-card.highlight { background: var(--accent); }
+  .metric-card.highlight .metric-label { color: rgba(255,255,255,0.65); }
+  .metric-card.highlight .metric-value { color: #fff; }
+  .metric-card.highlight .metric-sub { color: rgba(255,255,255,0.55); }
+  [data-theme="dark"] .metric-card.highlight .metric-value { color: #141210; }
+  [data-theme="dark"] .metric-card.highlight .metric-label { color: rgba(20,18,16,0.65); }
+  [data-theme="dark"] .metric-card.highlight .metric-sub { color: rgba(20,18,16,0.55); }
+
+  .section-title {
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .calendar-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
+  .cal-month { font-family: 'Instrument Serif', serif; font-size: 20px; flex: 1; }
+  .cal-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; width: 32px; height: 32px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--text2); transition: all 0.15s;
+  }
+  .cal-btn:hover { background: var(--surface2); color: var(--text); }
+
+  .calendar-grid {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+    transition: background 0.25s;
+  }
+  .cal-days-header { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border); }
+  .cal-day-name {
+    padding: 10px 4px; text-align: center;
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .cal-days-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .cal-day {
+    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 8px 6px; min-height: 72px; cursor: pointer;
+    transition: background 0.1s; position: relative;
+  }
+  .cal-day:hover { background: var(--accent-light); }
+  .cal-day:nth-child(7n) { border-right: none; }
+  .cal-day.other-month { background: var(--bg); }
+  .cal-day.other-month .day-num { color: var(--text3); }
+  .cal-day.today { background: var(--accent-light); }
+  .day-num { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 4px; }
+  .day-words { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--accent); font-weight: 500; }
+  .day-bar { display: none; height: 3px; border-radius: 2px; background: var(--accent-mid); margin-top: 4px; max-width: 100%; transition: width 0.3s; }
+
+  .add-panel {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 1.25rem; margin-bottom: 1.75rem;
+    transition: background 0.25s;
+  }
+  .add-panel-row { display: flex; gap: 10px; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--text2); }
+  .field input, .field select {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    font-family: 'Figtree', sans-serif; font-size: 14px;
+    color: var(--text); outline: none; transition: border-color 0.15s, background 0.25s, color 0.25s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent-mid); }
+  .field.flex1 { flex: 1; }
+
+  .projects-table { width: 100%; border-collapse: collapse; }
+  .projects-table th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text3); padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .projects-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .projects-table tr:last-child td { border-bottom: none; }
+  .projects-table tr:hover td { background: var(--surface2); }
+  .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .status-active { background: var(--accent-light); color: var(--accent); }
+  .status-done { background: var(--amber-light); color: var(--amber); }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,10,8,0.55); z-index: 100;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 16px; padding: 2rem;
+    width: 440px; max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    transition: background 0.25s;
+  }
+  .modal-title { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 1.5rem; }
+  .modal-field { margin-bottom: 1rem; }
+  .modal-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 5px; }
+  .modal-field input, .modal-field select {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px;
+    font-family: 'Figtree', sans-serif; font-size: 14px;
+    color: var(--text); outline: none; transition: border-color 0.15s, background 0.25s;
+  }
+  .modal-field input:focus { border-color: var(--accent-mid); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.5rem; }
+
+  .color-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+  .color-opt {
+    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; transition: transform 0.15s;
+  }
+  .color-opt:hover { transform: scale(1.15); }
+  .color-opt.selected { border-color: var(--text); }
+
+  .log-table { width: 100%; border-collapse: collapse; }
+  .log-table th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text3); padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .log-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); }
+  .log-table tr:last-child td { border-bottom: none; }
+  .log-words { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
+
+  .day-modal { width: 360px; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .project-header-actions { display: flex; align-items: center; gap: 8px; }
+
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; }
+    .main { padding: 1rem; }
+    .add-panel-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div>
+        <div class="logo"><div class="logo-dot"></div>Contador</div>
+        <div class="sidebar-subtitle">rastreador de palavras</div>
+      </div>
+      <div class="theme-toggle-wrap">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema" aria-label="Alternar modo claro/escuro"></button>
+        <span class="theme-label" id="theme-label">claro</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Visão</div>
+      <div class="all-projects-item active" onclick="selectProject(null)" id="all-item">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--text3);flex-shrink:0"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="project-name">Todos os projetos</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1">
+      <div class="sidebar-label">Projetos</div>
+      <div id="sidebar-projects"></div>
+      <button class="btn-new-project" onclick="openNewProject()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo projeto
+      </button>
+    </div>
+
+    <div class="sidebar-stats">
+      <div class="sidebar-label" style="margin-bottom:8px">Total geral</div>
+      <div class="stat-row"><span class="stat-label">Palavras escritas</span><span class="stat-value" id="sb-total">0</span></div>
+      <div class="stat-row"><span class="stat-label">Dias ativos</span><span class="stat-value" id="sb-days">0</span></div>
+      <div class="stat-row"><span class="stat-label">Projetos</span><span class="stat-value" id="sb-projects">0</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="view active" id="view-all">
+      <div class="main-header">
+        <div>
+          <div class="page-title">Todos os projetos</div>
+          <div class="page-meta">Visão geral de <span id="all-month-label"></span></div>
+        </div>
+        <button class="btn btn-primary" onclick="openNewProject()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo projeto
+        </button>
+      </div>
+      <div class="cards-row">
+        <div class="metric-card highlight">
+          <div class="metric-label">Total de palavras</div>
+          <div class="metric-value" id="all-total">0</div>
+          <div class="metric-sub">em todos os projetos</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Este mês</div>
+          <div class="metric-value" id="all-month">0</div>
+          <div class="metric-sub">palavras</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Hoje</div>
+          <div class="metric-value" id="all-today">0</div>
+          <div class="metric-sub">palavras</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Média diária</div>
+          <div class="metric-value" id="all-avg">0</div>
+          <div class="metric-sub">palavras/dia</div>
+        </div>
+      </div>
+      <div class="section-title">Projetos</div>
+      <div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1.75rem;transition:background 0.25s">
+        <table class="projects-table">
+          <thead><tr><th>Projeto</th><th>Início</th><th>Prazo</th><th>Palavras</th><th>Status</th><th></th></tr></thead>
+          <tbody id="projects-tbody">
+            <tr><td colspan="6" style="padding:2rem;text-align:center;color:var(--text3)">Nenhum projeto ainda. Crie o primeiro!</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="view" id="view-project">
+      <div class="main-header">
+        <div>
+          <div class="page-title" id="proj-title">Projeto</div>
+          <div class="page-meta" id="proj-dates"></div>
+        </div>
+        <div class="project-header-actions">
+          <button class="btn btn-ghost" onclick="openEditProject()">Editar</button>
+          <button class="btn btn-danger" onclick="deleteCurrentProject()">Excluir</button>
+        </div>
+      </div>
+      <div class="cards-row">
+        <div class="metric-card highlight">
+          <div class="metric-label">Total do projeto</div>
+          <div class="metric-value" id="proj-total">0</div>
+          <div class="metric-sub">palavras escritas</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Este mês</div>
+          <div class="metric-value" id="proj-month">0</div>
+          <div class="metric-sub">palavras</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Hoje</div>
+          <div class="metric-value" id="proj-today">0</div>
+          <div class="metric-sub">palavras</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Média diária</div>
+          <div class="metric-value" id="proj-avg">0</div>
+          <div class="metric-sub">palavras/dia</div>
+        </div>
+      </div>
+      <div class="section-title">Registrar palavras</div>
+      <div class="add-panel">
+        <div class="add-panel-row">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" id="add-date" style="width:160px">
+          </div>
+          <div class="field" style="flex:1">
+            <label>Palavras escritas</label>
+            <input type="number" id="add-words" placeholder="ex: 1500" min="1">
+          </div>
+          <div class="field">
+            <label>Nota (opcional)</label>
+            <input type="text" id="add-note" placeholder="Capítulo 3, rascunho..." style="width:200px">
+          </div>
+          <button class="btn btn-primary" onclick="addWords()" style="flex-shrink:0">Adicionar</button>
+        </div>
+      </div>
+      <div class="section-title">Calendário do mês</div>
+      <div class="calendar-nav">
+        <div class="cal-month" id="cal-month-title">Janeiro 2025</div>
+        <button class="cal-btn" onclick="changeMonth(-1)">&#8592;</button>
+        <button class="cal-btn" onclick="changeMonth(1)">&#8594;</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="goToday()">Hoje</button>
+      </div>
+      <div class="calendar-grid" style="margin-bottom:1.75rem">
+        <div class="cal-days-header">
+          <div class="cal-day-name">Dom</div><div class="cal-day-name">Seg</div><div class="cal-day-name">Ter</div>
+          <div class="cal-day-name">Qua</div><div class="cal-day-name">Qui</div><div class="cal-day-name">Sex</div><div class="cal-day-name">Sáb</div>
+        </div>
+        <div class="cal-days-grid" id="cal-grid"></div>
+      </div>
+      <div class="section-title">Histórico</div>
+      <div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:background 0.25s">
+        <table class="log-table">
+          <thead><tr><th>Data</th><th>Palavras</th><th>Nota</th><th></th></tr></thead>
+          <tbody id="log-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- NEW/EDIT PROJECT MODAL -->
+<div class="modal-overlay" id="project-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Novo projeto</div>
+    <div class="modal-field"><label>Nome do projeto</label><input type="text" id="m-name" placeholder="ex: Romance de verão, TCC..."></div>
+    <div class="modal-field"><label>Meta de palavras (opcional)</label><input type="number" id="m-goal" placeholder="ex: 50000"></div>
+    <div class="modal-field"><label>Data de início</label><input type="date" id="m-start"></div>
+    <div class="modal-field"><label>Data final (opcional)</label><input type="date" id="m-end"></div>
+    <div class="modal-field"><label>Cor do projeto</label><div class="color-picker" id="color-picker"></div></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProject()" id="modal-save-btn">Criar projeto</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAY DETAIL MODAL -->
+<div class="modal-overlay" id="day-modal">
+  <div class="modal day-modal">
+    <div class="modal-title" id="day-modal-title">Dia</div>
+    <div id="day-modal-content"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeDayModal()">Fechar</button></div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#2D5016','#639922','#BA7517','#185FA5','#993356','#533AB7','#D85A30','#0F6E56','#A32D2D','#5F5E5A'];
+const COLOR_NAMES = ['Verde escuro','Verde','Âmbar','Azul','Rosa','Roxo','Coral','Teal','Vermelho','Cinza'];
+
+let state = { projects: [], entries: [], currentProject: null, calYear: new Date().getFullYear(), calMonth: new Date().getMonth(), editingProject: null };
+
+function save() { localStorage.setItem('wc_state', JSON.stringify(state)); }
+function load() { const d = localStorage.getItem('wc_state'); if (d) state = JSON.parse(d); }
+function dateStr(d) { return d.toISOString().split('T')[0]; }
+function todayStr() { return dateStr(new Date()); }
+function monthName(m, y) {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return months[m] + ' ' + y;
+}
+function formatDate(str) { if (!str) return '—'; const [y,m,d] = str.split('-'); return d+'/'+m+'/'+y; }
+
+// THEME
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  document.getElementById('theme-label').textContent = newTheme === 'dark' ? 'escuro' : 'claro';
+  localStorage.setItem('wc_theme', newTheme);
+}
+function loadTheme() {
+  const saved = localStorage.getItem('wc_theme');
+  const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  const theme = saved || preferred;
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('theme-label').textContent = theme === 'dark' ? 'escuro' : 'claro';
+}
+
+// STATS
+function projectWords(pid) { return state.entries.filter(e => e.project === pid).reduce((s,e) => s+e.words, 0); }
+function projectWordsMonth(pid, y, m) {
+  const prefix = y+'-'+(m+1<10?'0'+(m+1):(m+1));
+  return state.entries.filter(e => e.project === pid && e.date.startsWith(prefix)).reduce((s,e) => s+e.words, 0);
+}
+function wordsForDay(pid, dateS) { return state.entries.filter(e => e.project === pid && e.date === dateS).reduce((s,e) => s+e.words, 0); }
+function wordsForDayAll(dateS) { return state.entries.filter(e => e.date === dateS).reduce((s,e) => s+e.words, 0); }
+function activeDays(pid) { return new Set(state.entries.filter(e => e.project === pid).map(e => e.date)).size; }
+function avgWords(pid) { const d = activeDays(pid); return d === 0 ? 0 : Math.round(projectWords(pid) / d); }
+
+function renderSidebar() {
+  const el = document.getElementById('sidebar-projects');
+  el.innerHTML = '';
+  state.projects.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'project-item' + (state.currentProject === p.id ? ' active' : '');
+    div.onclick = () => selectProject(p.id);
+    div.innerHTML = `<div class="project-dot" style="background:${p.color}"></div><span class="project-name">${p.name}</span><span class="project-count">${projectWords(p.id).toLocaleString()}</span>`;
+    el.appendChild(div);
+  });
+  document.getElementById('all-item').className = 'all-projects-item' + (!state.currentProject ? ' active' : '');
+  const total = state.entries.reduce((s,e) => s+e.words, 0);
+  const days = new Set(state.entries.map(e => e.date)).size;
+  document.getElementById('sb-total').textContent = total.toLocaleString();
+  document.getElementById('sb-days').textContent = days;
+  document.getElementById('sb-projects').textContent = state.projects.length;
+}
+
+function selectProject(pid) {
+  state.currentProject = pid;
+  if (!pid) {
+    document.getElementById('view-all').className = 'view active';
+    document.getElementById('view-project').className = 'view';
+    renderAllView();
+  } else {
+    document.getElementById('view-all').className = 'view';
+    document.getElementById('view-project').className = 'view active';
+    state.calYear = new Date().getFullYear();
+    state.calMonth = new Date().getMonth();
+    renderProjectView();
+  }
+  renderSidebar();
+}
+
+function renderAllView() {
+  const today = todayStr();
+  const now = new Date();
+  const total = state.entries.reduce((s,e) => s+e.words, 0);
+  const monthPrefix = now.getFullYear()+'-'+(now.getMonth()+1<10?'0'+(now.getMonth()+1):(now.getMonth()+1));
+  const month = state.entries.filter(e => e.date.startsWith(monthPrefix)).reduce((s,e) => s+e.words, 0);
+  const todayW = wordsForDayAll(today);
+  const days = new Set(state.entries.map(e => e.date)).size;
+  const avg = days ? Math.round(total/days) : 0;
+  document.getElementById('all-total').textContent = total.toLocaleString();
+  document.getElementById('all-month').textContent = month.toLocaleString();
+  document.getElementById('all-today').textContent = todayW.toLocaleString();
+  document.getElementById('all-avg').textContent = avg.toLocaleString();
+  document.getElementById('all-month-label').textContent = monthName(now.getMonth(), now.getFullYear());
+  const tbody = document.getElementById('projects-tbody');
+  if (state.projects.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:2rem;text-align:center;color:var(--text3)">Nenhum projeto ainda. Crie o primeiro!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  state.projects.forEach(p => {
+    const w = projectWords(p.id);
+    const isDone = p.endDate && p.endDate < today;
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => selectProject(p.id);
+    tr.innerHTML = `<td><span style="display:inline-flex;align-items:center;gap:6px;font-weight:500"><span style="width:10px;height:10px;border-radius:50%;background:${p.color};display:inline-block;"></span>${p.name}</span></td>
+      <td style="color:var(--text3)">${formatDate(p.startDate)}</td>
+      <td style="color:var(--text3)">${formatDate(p.endDate)}</td>
+      <td><strong style="font-family:'DM Mono',monospace">${w.toLocaleString()}</strong>${p.goal ? ` <span style="color:var(--text3);font-size:12px">/ ${parseInt(p.goal).toLocaleString()}</span>` : ''}</td>
+      <td><span class="status-badge ${isDone?'status-done':'status-active'}">${isDone?'Concluído':'Ativo'}</span></td>
+      <td style="text-align:right"><button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();openEditProjectById('${p.id}')">Editar</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderProjectView() {
+  const p = state.projects.find(x => x.id === state.currentProject);
+  if (!p) return;
+  const today = todayStr();
+  const total = projectWords(p.id);
+  const monthW = projectWordsMonth(p.id, state.calYear, state.calMonth);
+  const todayW = wordsForDay(p.id, today);
+  const avg = avgWords(p.id);
+  document.getElementById('proj-title').textContent = p.name;
+  let dates = 'Início: ' + formatDate(p.startDate);
+  if (p.endDate) dates += ' · Prazo: ' + formatDate(p.endDate);
+  if (p.goal) dates += ' · Meta: ' + parseInt(p.goal).toLocaleString() + ' palavras';
+  document.getElementById('proj-dates').innerHTML = '<span>' + dates + '</span>';
+  document.getElementById('proj-total').textContent = total.toLocaleString();
+  document.getElementById('proj-month').textContent = monthW.toLocaleString();
+  document.getElementById('proj-today').textContent = todayW.toLocaleString();
+  document.getElementById('proj-avg').textContent = avg.toLocaleString();
+  document.getElementById('add-date').value = today;
+  renderCalendar();
+  renderLog();
+}
+
+function renderCalendar() {
+  const p = state.projects.find(x => x.id === state.currentProject);
+  if (!p) return;
+  document.getElementById('cal-month-title').textContent = monthName(state.calMonth, state.calYear);
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  const firstDay = new Date(state.calYear, state.calMonth, 1).getDay();
+  const daysInMonth = new Date(state.calYear, state.calMonth+1, 0).getDate();
+  const daysInPrev = new Date(state.calYear, state.calMonth, 0).getDate();
+  const today = todayStr();
+  let maxW = 0;
+  for (let d=1; d<=daysInMonth; d++) {
+    const ds = state.calYear+'-'+pad(state.calMonth+1)+'-'+pad(d);
+    const w = wordsForDay(p.id, ds);
+    if (w > maxW) maxW = w;
+  }
+  for (let i=0; i<firstDay; i++) {
+    const d = daysInPrev - firstDay + 1 + i;
+    const div = document.createElement('div');
+    div.className = 'cal-day other-month';
+    div.innerHTML = `<div class="day-num">${d}</div>`;
+    grid.appendChild(div);
+  }
+  for (let d=1; d<=daysInMonth; d++) {
+    const ds = state.calYear+'-'+pad(state.calMonth+1)+'-'+pad(d);
+    const w = wordsForDay(p.id, ds);
+    const div = document.createElement('div');
+    let cls = 'cal-day';
+    if (ds === today) cls += ' today';
+    if (w > 0) cls += ' has-words';
+    div.className = cls;
+    const barW = maxW > 0 ? Math.round((w/maxW)*100) : 0;
+    const dayNumHtml = ds === today
+      ? `<div class="day-num"><span style="background:var(--accent);color:${document.documentElement.getAttribute('data-theme')==='dark'?'#141210':'#fff'};width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px">${d}</span></div>`
+      : `<div class="day-num">${d}</div>`;
+    div.innerHTML = `${dayNumHtml}${w > 0 ? `<div class="day-words">${w.toLocaleString()}</div>` : ''}<div class="day-bar" style="display:${w>0?'block':'none'};width:${barW}%;background:${p.color}"></div>`;
+    div.onclick = () => openDayModal(ds, w, p);
+    grid.appendChild(div);
+  }
+  const total = firstDay + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i=1; i<=remaining; i++) {
+    const div = document.createElement('div');
+    div.className = 'cal-day other-month';
+    div.innerHTML = `<div class="day-num">${i}</div>`;
+    grid.appendChild(div);
+  }
+}
+
+function pad(n) { return n < 10 ? '0'+n : ''+n; }
+
+function changeMonth(dir) {
+  state.calMonth += dir;
+  if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
+  if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
+  renderCalendar();
+  const p = state.projects.find(x => x.id === state.currentProject);
+  if (p) document.getElementById('proj-month').textContent = projectWordsMonth(p.id, state.calYear, state.calMonth).toLocaleString();
+}
+
+function goToday() { state.calYear = new Date().getFullYear(); state.calMonth = new Date().getMonth(); renderCalendar(); }
+
+function renderLog() {
+  const tbody = document.getElementById('log-tbody');
+  const pid = state.currentProject;
+  const entries = state.entries.filter(e => e.project === pid).sort((a,b) => b.date.localeCompare(a.date));
+  if (entries.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--text3)">Nenhum registro ainda.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  entries.forEach(e => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${formatDate(e.date)}</td><td class="log-words">+${e.words.toLocaleString()}</td><td style="color:var(--text3)">${e.note||'—'}</td><td style="text-align:right"><button class="btn btn-ghost" style="padding:3px 8px;font-size:11px;color:var(--red);border-color:var(--red-light)" onclick="deleteEntry('${e.id}')">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function addWords() {
+  const date = document.getElementById('add-date').value;
+  const words = parseInt(document.getElementById('add-words').value);
+  const note = document.getElementById('add-note').value.trim();
+  if (!date || !words || words < 1) { alert('Preencha a data e o número de palavras.'); return; }
+  state.entries.push({ id: Date.now().toString(), project: state.currentProject, date, words, note });
+  document.getElementById('add-words').value = '';
+  document.getElementById('add-note').value = '';
+  save(); renderProjectView(); renderSidebar();
+}
+
+function deleteEntry(id) {
+  if (!confirm('Remover este registro?')) return;
+  state.entries = state.entries.filter(e => e.id !== id);
+  save(); renderProjectView(); renderSidebar();
+}
+
+function openNewProject() {
+  state.editingProject = null;
+  document.getElementById('modal-title').textContent = 'Novo projeto';
+  document.getElementById('modal-save-btn').textContent = 'Criar projeto';
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-goal').value = '';
+  document.getElementById('m-start').value = todayStr();
+  document.getElementById('m-end').value = '';
+  renderColorPicker(COLORS[0]);
+  document.getElementById('project-modal').classList.add('open');
+}
+
+function openEditProject() { openEditProjectById(state.currentProject); }
+
+function openEditProjectById(pid) {
+  const p = state.projects.find(x => x.id === pid);
+  if (!p) return;
+  state.editingProject = pid;
+  document.getElementById('modal-title').textContent = 'Editar projeto';
+  document.getElementById('modal-save-btn').textContent = 'Salvar';
+  document.getElementById('m-name').value = p.name;
+  document.getElementById('m-goal').value = p.goal || '';
+  document.getElementById('m-start').value = p.startDate || '';
+  document.getElementById('m-end').value = p.endDate || '';
+  renderColorPicker(p.color);
+  document.getElementById('project-modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('project-modal').classList.remove('open'); }
+
+function renderColorPicker(selected) {
+  const el = document.getElementById('color-picker');
+  el.innerHTML = '';
+  COLORS.forEach((c,i) => {
+    const div = document.createElement('div');
+    div.className = 'color-opt' + (c === selected ? ' selected' : '');
+    div.style.background = c;
+    div.title = COLOR_NAMES[i];
+    div.onclick = () => { document.querySelectorAll('.color-opt').forEach(x => x.classList.remove('selected')); div.classList.add('selected'); };
+    el.appendChild(div);
+  });
+}
+
+function selectedColor() { const el = document.querySelector('.color-opt.selected'); return el ? el.style.background : COLORS[0]; }
+
+function saveProject() {
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { alert('Nome obrigatório.'); return; }
+  const startDate = document.getElementById('m-start').value;
+  const endDate = document.getElementById('m-end').value;
+  const goal = document.getElementById('m-goal').value;
+  const color = selectedColor();
+  if (state.editingProject) {
+    const p = state.projects.find(x => x.id === state.editingProject);
+    if (p) { p.name = name; p.startDate = startDate; p.endDate = endDate; p.goal = goal; p.color = color; }
+  } else {
+    state.projects.push({ id: Date.now().toString(), name, startDate, endDate, goal, color });
+  }
+  closeModal(); save(); renderSidebar();
+  if (state.currentProject) renderProjectView(); else renderAllView();
+}
+
+function deleteCurrentProject() {
+  if (!confirm('Excluir este projeto e todos seus registros?')) return;
+  state.entries = state.entries.filter(e => e.project !== state.currentProject);
+  state.projects = state.projects.filter(p => p.id !== state.currentProject);
+  state.currentProject = null;
+  save(); selectProject(null);
+}
+
+function openDayModal(dateS, words, p) {
+  const entries = state.entries.filter(e => e.project === p.id && e.date === dateS);
+  document.getElementById('day-modal-title').textContent = formatDate(dateS);
+  let html = '';
+  if (words === 0) {
+    html = '<p style="color:var(--text3);font-size:14px;padding:1rem 0">Nenhuma palavra registrada neste dia.</p>';
+  } else {
+    html = `<p style="font-size:28px;font-family:\'DM Mono\',monospace;font-weight:500;margin-bottom:1rem">${words.toLocaleString()} <span style="font-size:14px;color:var(--text3);font-family:\'Figtree\',sans-serif">palavras</span></p>`;
+    if (entries.length > 0) {
+      html += '<div style="border-top:1px solid var(--border);padding-top:0.75rem">';
+      entries.forEach(e => {
+        html += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13.5px"><span style="font-family:\'DM Mono\',monospace;color:var(--accent);font-weight:500">+${e.words.toLocaleString()}</span><span style="color:var(--text3)">${e.note||''}</span></div>`;
+      });
+      html += '</div>';
+    }
+  }
+  document.getElementById('day-modal-content').innerHTML = html;
+  document.getElementById('day-modal').classList.add('open');
+}
+
+function closeDayModal() { document.getElementById('day-modal').classList.remove('open'); }
+
+document.getElementById('project-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.getElementById('day-modal').addEventListener('click', function(e) { if (e.target === this) closeDayModal(); });
+
+// INIT
+loadTheme();
+load();
+if (state.currentProject) { const valid = state.projects.find(p => p.id === state.currentProject); if (!valid) state.currentProject = null; }
+renderSidebar();
+if (state.currentProject) {
+  document.getElementById('view-all').className = 'view';
+  document.getElementById('view-project').className = 'view active';
+  renderProjectView();
+} else { renderAllView(); }
+</script>
+</body>
+</html>
