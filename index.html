@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Contador de Palavras</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231A1814'/%3E%3Ctext x='16' y='22' font-size='20' text-anchor='middle' font-family='Georgia,serif' fill='white' font-weight='bold'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -11,7 +12,7 @@
   [data-theme="light"] {
     --bg: #F7F5F0; --surface: #FFFFFF; --surface2: #F0EDE6; --border: #E2DDD4;
     --text: #1A1814; --text2: #6B665C; --text3: #A09990;
-    --accent: #2D5016; --accent-light: #EBF2E1; --accent-mid: #639922;
+    --accent: #1A1814; --accent-light: #EEECE8; --accent-mid: #1A1814;
     --amber: #BA7517; --amber-light: #FAEEDA; --red: #A32D2D; --red-light: #FCEBEB;
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
     --radius: 12px; --toggle-bg: #E2DDD4;
@@ -19,7 +20,7 @@
   [data-theme="dark"] {
     --bg: #141210; --surface: #1E1C18; --surface2: #272420; --border: #38342C;
     --text: #F0EDE6; --text2: #A09880; --text3: #6B6558;
-    --accent: #7BBF3A; --accent-light: #1E2A14; --accent-mid: #7BBF3A;
+    --accent: #F0EDE6; --accent-light: #2A2820; --accent-mid: #F0EDE6;
     --amber: #E8A030; --amber-light: #2A2010; --red: #E05555; --red-light: #2A1414;
     --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
     --radius: 12px; --toggle-bg: #38342C;
@@ -31,8 +32,8 @@
   .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; transition: background 0.25s, border-color 0.25s; }
   .main { padding: 2rem; overflow-y: auto; }
   .sidebar-header { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-  .logo { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--text); display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-  .logo-dot { width: 8px; height: 8px; background: var(--accent-mid); border-radius: 50%; }
+  .logo { font-family: 'Instrument Serif', serif; font-size: 17px; color: var(--text); display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--text3); border-radius: 50%; }
   .sidebar-subtitle { font-size: 12px; color: var(--text3); font-weight: 400; }
   .theme-toggle { background: var(--toggle-bg); border: none; border-radius: 20px; width: 44px; height: 24px; cursor: pointer; position: relative; flex-shrink: 0; margin-top: 4px; transition: background 0.25s; }
   .theme-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); transition: transform 0.25s, background 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
@@ -82,9 +83,8 @@
   .page-meta { font-size: 13px; color: var(--text3); margin-top: 4px; }
   .page-meta span { color: var(--text2); }
   .btn { padding: 8px 16px; border-radius: 8px; font-family: 'Figtree', sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  [data-theme="light"] .btn-primary:hover { background: #3d6b1f; }
-  [data-theme="dark"] .btn-primary:hover { background: #8ed14a; }
+  .btn-primary { background: var(--accent); color: var(--bg); }
+  .btn-primary:hover { opacity: 0.85; }
   .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
   .btn-ghost:hover { background: var(--surface2); color: var(--text); }
   .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red-light); }
@@ -98,8 +98,8 @@
   .metric-card.highlight .metric-label { color: rgba(255,255,255,0.65); }
   .metric-card.highlight .metric-value { color: #fff; }
   .metric-card.highlight .metric-sub { color: rgba(255,255,255,0.55); }
-  [data-theme="dark"] .metric-card.highlight .metric-value { color: #141210; }
   [data-theme="dark"] .metric-card.highlight .metric-label { color: rgba(20,18,16,0.65); }
+  [data-theme="dark"] .metric-card.highlight .metric-value { color: #141210; }
   [data-theme="dark"] .metric-card.highlight .metric-sub { color: rgba(20,18,16,0.55); }
   .section-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
   .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -170,7 +170,7 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <div>
-        <div class="logo"><div class="logo-dot"></div>Contador</div>
+        <div class="logo"><div class="logo-dot"></div>Contador de Palavras</div>
         <div class="sidebar-subtitle">rastreador de palavras</div>
       </div>
       <div class="theme-toggle-wrap">
